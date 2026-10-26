@@ -31,7 +31,9 @@ runs:
             manager="KernelSU Next Manager"
             ;;
           bakasu)
-            repo="https://github.com/Baka-SU/BakaSU.git"
+            repo="https://github.com/qiuyewuhua-crypto/BakaSU.git"
+            # local override: patched fork commit (selinux domain/type rename)
+            expected_commit="8804465195da94de919b638af4d6225dff5b7439"
             directory="BakaSU"
             manager="BakaSU Manager"
             ;;
