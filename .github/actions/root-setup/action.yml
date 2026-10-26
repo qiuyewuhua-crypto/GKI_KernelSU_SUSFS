@@ -33,7 +33,7 @@ runs:
           bakasu)
             repo="https://github.com/qiuyewuhua-crypto/BakaSU.git"
             # local override: patched fork commit (selinux domain/type rename)
-            expected_commit="c9eab069dedcc2c0953aa14cb63d1958223a3983"
+            expected_commit="0c98a75ab25c22c650bd66a36607a092e18493b0"
             directory="BakaSU"
             manager="BakaSU Manager"
             ;;
