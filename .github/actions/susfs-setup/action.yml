@@ -34,7 +34,11 @@ runs:
         }
 
         SUSFS_BRANCH="gki-${{ inputs.version }}"
-        SUSFS_REPO="https://gitlab.com/simonpunk/susfs4ksu.git"
+        # local override: GitLab clone endpoint is overloaded (502 "unable to
+        # handle this request due to load"); use a mirror that carries the same
+        # commit objects. The pinned susfs_commit below is SHA-verified, so the
+        # checked-out tree is identical to upstream.
+        SUSFS_REPO="https://github.com/KairoVera/susfs4ksu-mirror.git"
 
         echo "Preparing SUSFS for branch: $SUSFS_BRANCH"
         echo "Cloning latest from $SUSFS_BRANCH..."
