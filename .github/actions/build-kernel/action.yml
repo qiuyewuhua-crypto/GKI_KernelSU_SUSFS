@@ -77,6 +77,17 @@ runs:
           build/build.sh -j"$(nproc)"
         else
           sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' common/BUILD.bazel
+          # local override: embed the vendor /proc/config.gz verbatim, so the
+          # runtime config blob matches the stock image byte for byte (size,
+          # line count and version banner included). Without this the blob is
+          # regenerated from the GKI defconfig and is both shorter and stamped
+          # with the wrong kernel version.
+          if [ -f "${{ github.workspace }}/factory_config.gz" ]; then
+            cp "${{ github.workspace }}/factory_config.gz" ./common/factory_config.gz
+            python3 "${{ github.workspace }}/patch-config-blob.py"
+          else
+            echo "WARNING: factory_config.gz missing; /proc/config.gz will be regenerated from defconfig."
+          fi
           PAGE_SIZE_FLAGS=()
           if [ "$PAGE_SIZE" = "16k" ]; then
             PAGE_SIZE_FLAGS+=(--page_size=16k)
@@ -165,6 +176,25 @@ runs:
           exit 1
         fi
         echo "Page size verified: ${PAGE_SIZE}"
+
+    - name: 'Verify Embedded Config Blob'
+      if: ${{ hashFiles('factory_config.gz') != '' }}
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel
+      run: |
+        set -euo pipefail
+        IMG=""
+        for candidate in \
+          bazel-bin/common/kernel_aarch64/Image \
+          /home/runner/out/dist/Image; do
+          if [ -f "$candidate" ]; then IMG="$candidate"; break; fi
+        done
+        if [ -z "$IMG" ]; then
+          echo "ERROR: built Image not found; cannot verify config blob" >&2
+          exit 1
+        fi
+        python3 "${{ github.workspace }}/check-config-blob.py" \
+          "$IMG" "${{ github.workspace }}/factory_config.gz"
 
     - name: 'Gather Build Artifacts'
       shell: bash
