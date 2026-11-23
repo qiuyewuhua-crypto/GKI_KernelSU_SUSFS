@@ -151,3 +151,11 @@ runs:
         version: ${{ inputs.version }}
         sublevel: ${{ inputs.sublevel }}
         os_patch_level: ${{ inputs.os_patch_level }}
+
+
+    - name: Filter the SELinux context-type oracle
+      # Last step on purpose: the root flavour's selinux_hide.c is already fully
+      # assembled at this point, so nothing downstream can undo the injection.
+      uses: ./.github/actions/sel-context-filter
+      with:
+        root_flavor: ${{ inputs.root_flavor }}

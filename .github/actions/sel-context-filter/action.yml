@@ -1,0 +1,28 @@
+name: 'Filter the SELinux context-type oracle'
+description: 'Hook sel_context_ops.write so a probing app cannot enumerate root-related SELinux type names through /sys/fs/selinux/context'
+
+inputs:
+  root_flavor:
+    description: 'Selected root implementation; empty or "none" means there is no selinux_hide.c to patch'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Inject the filter into the root flavour's selinux_hide.c
+      # /sys/fs/selinux/context is mode 0666 and answers EINVAL only when the
+      # context's type does not exist, so replaying a list of root type names
+      # against it is a complete "is this kernel rooted" oracle - and it survives
+      # every file, mount and process hide. selinux_hide already filters the
+      # oracle, but through write_op[], a table only sel_write() consults; on GKI
+      # 6.5+ SEL_CONTEXT carries its own file_operations and dispatches
+      # sel_context_ops.write -> handle_sel_write_context instead, so that filter
+      # is dead code here. Patch the fops slot and answer -EINVAL for root-related
+      # type names only, leaving the detector's own sentinel probes untouched.
+      if: inputs.root_flavor != '' && inputs.root_flavor != 'none'
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 "${{ github.workspace }}/.github/scripts/apply_sel_context_filter.py" \
+          "${{ github.workspace }}"
